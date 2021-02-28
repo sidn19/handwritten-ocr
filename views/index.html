@@ -5,16 +5,51 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OCR</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">    
     <style>
-        body {
-            background-color: grey;
+        html, body {
+            height: 100%;
+        }
+
+        .menu-div {
+            display: flex;
+            position: absolute;
+            flex-direction: column;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .menu-div svg {
+            margin: 0.15rem 0rem;
+            height: 40px;
+            width: 40px;
+            cursor: pointer;
+        }
+
+        .photo-div {
+            position: absolute;
+            bottom: 1rem;
+            left: calc(50% - 25px);         
+        }
+
+        .photo-div svg {
+            height: 50px;
+            width: 50px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <video id="webcam" autoplay playsinline></video>
+    <div class="d-flex align-items-center justify-content-center h-100">
+        <video id="webcam" autoplay playsinline></video>        
+    </div>
+    <div class="photo-div" onclick="captureImage()">
+        <i data-feather="aperture"></i>
+    </div>
+    <div class="menu-div">
+        <i data-feather="settings"></i>
+        <i data-feather="clock"></i>
+    </div>
     <canvas id="canvas" class="d-none"></canvas>
     <!-- Toast -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
@@ -28,19 +63,29 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-    <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
-    <script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+    <script> 
+        feather.replace();
+
         const webcamElement = document.getElementById('webcam');
         const canvasElement = document.getElementById('canvas');
 
-        const webcam = new Webcam(webcamElement, 'user', canvasElement, null);
+        const webcam = new Webcam(webcamElement, 'environment', canvasElement, null);
         webcam.start()
-        .then(result =>{
-            
-        })
         .catch(err => {
             swal('No Camera Found!', 'Sorry, this application requires a camera to function!', 'error');
         });
+
+        function captureImage() {
+            const image = webcam.snap();
+            axios.post('/', { image }).then(response => {
+                swal('Result', response.data, 'success');
+            }).catch(error => {
+                swal('Error!', error.message, 'error');
+            });
+        }
 
         function toast(body, type = 'notice') {
             const toast = new bootstrap.Toast(document.getElementById('toast'));
