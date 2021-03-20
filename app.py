@@ -17,4 +17,4 @@ def get_text():
     data = base64.b64decode(data)
     return pytesseract.image_to_string(Image.open(BytesIO(data)))
 
-run()
+run(reloader=True)

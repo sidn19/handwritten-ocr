@@ -11,6 +11,21 @@
             height: 100%;
         }
 
+        body.dark {
+            background-color: #000;
+            color: #ddd;
+        }
+        body.dark .swal-modal {
+            background-color: #000;
+        }
+        body.dark .swal-button {
+            background-color: #333;
+        }
+        body.dark .form-check-input:checked {
+            background-color: #333;
+            border-color: #333;
+        }
+
         .menu-div {
             display: flex;
             position: absolute;
@@ -41,19 +56,19 @@
 </head>
 <body>
     <div class="d-flex align-items-center justify-content-center h-100">
-        <video id="webcam" autoplay playsinline></video>        
+        <video id="webcam" autoplay playsinline style="max-width: 100%;"></video>        
     </div>
     <div class="photo-div" onclick="captureImage()">
         <i data-feather="aperture"></i>
     </div>
     <div class="menu-div">
-        <i data-feather="settings"></i>
+        <i data-feather="settings" onclick="openSettings()"></i>
         <i data-feather="clock"></i>
     </div>
     <canvas id="canvas" class="d-none"></canvas>
     <!-- Toast -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
-        <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div id="toast" class="toast align-items-center text-white border-0 hide" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body" id="toast-body"></div>
                 <button id="toast-close-button" type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
@@ -67,6 +82,44 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
     <script> 
+        // global state
+        const globalState = {};
+        globalState.internalSnapshot = localStorage.getItem('application-state');
+        if (globalState.internalSnapshot !== null) {
+            globalState.internalSnapshot = JSON.parse(globalState.internalSnapshot);
+        }
+        else {
+            globalState.internalSnapshot = {
+                darkMode: false,
+                automaticSave: true
+            }
+        }
+        // state functions
+        globalState.observers = [];
+        globalState.set = (key, value) => {
+            globalState.internalSnapshot[key] = value;
+            for (let observer of globalState.observers) {
+                observer(globalState.internalSnapshot);
+            }
+        }
+        globalState.register = observer => {
+            globalState.observers.push(observer);
+        }
+
+        // register an observer
+        const stateObserver = snapshot => {
+            console.log(snapshot);
+            if (snapshot.darkMode) {
+                document.body.classList.add('dark');
+            }
+            else {
+                document.body.classList.remove('dark');
+            }
+        }
+        globalState.register(stateObserver);
+        // init
+        stateObserver(globalState.internalSnapshot);
+        
         feather.replace();
 
         const webcamElement = document.getElementById('webcam');
@@ -87,9 +140,30 @@
             });
         }
 
+        function openSettings() {
+            const content = document.createElement('div');
+            content.style.textAlign = 'left';
+            content.style.marginTop = '4rem';
+
+            content.innerHTML = `
+            <div class="form-check form-switch d-flex align-items-center mb-3">
+                <input ${globalState.internalSnapshot.darkMode ? 'checked' : ''} onchange="globalState.set('darkMode', event.target.checked)" class="form-check-input mt-0" style="font-size: 2rem; margin-left: 0rem;" type="checkbox" id="darkMode">
+                <label class="form-check-label" style="font-size: 1.5rem; margin-left: 1rem;" for="darkMode">Dark Mode</label>
+            </div>
+            <div class="form-check form-switch d-flex align-items-center mt-3">
+                <input ${globalState.internalSnapshot.automaticSave ? 'checked' : ''} onchange="globalState.set('automaticSave', event.target.checked)" class="form-check-input mt-0" style="font-size: 2rem; margin-left: 0rem;" type="checkbox" id="automaticSave">
+                <label class="form-check-label" style="font-size: 1.5rem;  margin-left: 1rem;" for="automaticSave">Automatically Save Results</label>
+            </div>
+            `;
+            swal({ content, button: 'Save' }).then(save => {
+                if (save) {
+                    localStorage.setItem('application-state', JSON.stringify(globalState.internalSnapshot));
+                }
+            })
+        }
+
         function toast(body, type = 'notice') {
             const toast = new bootstrap.Toast(document.getElementById('toast'));
-            
             if (type === 'notice') {
                 document.getElementById('toast').classList.remove('bg-danger', 'text-white');
                 document.getElementById('toast-close-button').classList.remove('btn-close-white');
