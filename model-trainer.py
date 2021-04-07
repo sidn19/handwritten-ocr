@@ -3,8 +3,8 @@ from keras.preprocessing import image_dataset_from_directory
 from tensorflow import data
 AUTOTUNE = data.AUTOTUNE
 
-image_height = 128
-image_width = 128
+image_height = 64
+image_width = 64
 
 X_train = image_dataset_from_directory('dataset', validation_split=0.2, subset='training', seed=0, image_size=(image_height, image_width), label_mode='categorical')
 X_test = image_dataset_from_directory('dataset', validation_split=0.2, subset='validation', seed=0, image_size=(image_height, image_width), label_mode='categorical')
@@ -31,8 +31,9 @@ num_classes = 62
 
 model = Sequential([
   Rescaling(1.0 / 255, input_shape=(image_height, image_width, 3)),
-  Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform'),
+  Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
   MaxPooling2D((2, 2)),
+  Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
   Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
   Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
   MaxPooling2D((2, 2)),
@@ -47,4 +48,10 @@ model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['ac
 model.summary()
 
 # %%
-model.fit(X_train, validation_data=X_test, epochs=3)
+model.fit(X_train, validation_data=X_test, epochs=4)
+# %%
+X_pred = image_dataset_from_directory('predict', seed=0, image_size=(image_height, image_width), label_mode='categorical', shuffle=False)
+y_pred = model.predict_classes(X_pred)
+y_pred = list(map(lambda x: class_names[x], y_pred.tolist()))
+print(y_pred)
+# %%
