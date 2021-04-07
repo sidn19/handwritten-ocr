@@ -6,8 +6,8 @@ AUTOTUNE = data.AUTOTUNE
 image_height = 64
 image_width = 64
 
-X_train = image_dataset_from_directory('dataset', validation_split=0.2, subset='training', seed=0, image_size=(image_height, image_width), label_mode='categorical')
-X_test = image_dataset_from_directory('dataset', validation_split=0.2, subset='validation', seed=0, image_size=(image_height, image_width), label_mode='categorical')
+X_train = image_dataset_from_directory('isochronous-dataset', validation_split=0.2, subset='training', seed=0, image_size=(image_height, image_width), label_mode='categorical', color_mode='grayscale')
+X_test = image_dataset_from_directory('isochronous-dataset', validation_split=0.2, subset='validation', seed=0, image_size=(image_height, image_width), label_mode='categorical', color_mode='grayscale')
 
 for image_batch, labels_batch in X_train:
     print(image_batch.shape)
@@ -30,7 +30,7 @@ from keras.optimizers import SGD
 num_classes = 62
 
 model = Sequential([
-  Rescaling(1.0 / 255, input_shape=(image_height, image_width, 3)),
+  Rescaling(1.0 / 255, input_shape=(image_height, image_width, 1)),
   Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
   MaxPooling2D((2, 2)),
   Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
