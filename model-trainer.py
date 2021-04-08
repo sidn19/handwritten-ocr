@@ -26,19 +26,22 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D
 from keras.layers.experimental.preprocessing import Rescaling
 from keras.optimizers import SGD
+from tensorflow.keras import regularizers
 
 num_classes = 62
 
 model = Sequential([
   Rescaling(1.0 / 255, input_shape=(image_height, image_width, 1)),
-  Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
+  Conv2D(64, (3, 3), activation='relu'),
   MaxPooling2D((2, 2)),
-  Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
-  Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
-  Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform'),
+  Conv2D(64, (3, 3), activation='relu'),
+  Conv2D(64, (3, 3), activation='relu'),
+  Conv2D(64, (3, 3), activation='relu'),
   MaxPooling2D((2, 2)),
   Flatten(),
-  Dense(100, activation='relu', kernel_initializer='he_uniform'),
+  Dense(100, activation='relu',
+    kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4)
+  ),
   Dense(num_classes, activation='softmax')
 ])
 
@@ -48,9 +51,9 @@ model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['ac
 model.summary()
 
 # %%
-model.fit(X_train, validation_data=X_test, epochs=4)
+model.fit(X_train, validation_data=X_test, epochs=10)
 # %%
-X_pred = image_dataset_from_directory('predict', seed=0, image_size=(image_height, image_width), label_mode='categorical', shuffle=False)
+X_pred = image_dataset_from_directory('predict', seed=0, image_size=(image_height, image_width), label_mode='categorical', shuffle=False, color_mode='grayscale')
 y_pred = model.predict_classes(X_pred)
 y_pred = list(map(lambda x: class_names[x], y_pred.tolist()))
 print(y_pred)
