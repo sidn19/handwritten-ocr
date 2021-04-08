@@ -18,6 +18,6 @@ for directory in os.scandir('dataset'):
     for item in os.scandir(directory):
         files.append(os.path.join(directory.path, item.name))
     
-    files = random.sample(files, min(500, len(files)))
+    files = random.sample(files, min(X, len(files)))
     for index, file_path in enumerate(files):
         shutil.copyfile(file_path, 'isochronous-dataset/{}/{}.png'.format(directory.name, index))
