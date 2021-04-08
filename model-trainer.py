@@ -5,9 +5,10 @@ AUTOTUNE = data.AUTOTUNE
 
 image_height = 64
 image_width = 64
+batch_size = 32
 
-X_train = image_dataset_from_directory('isochronous-dataset', validation_split=0.2, subset='training', seed=0, image_size=(image_height, image_width), label_mode='categorical', color_mode='grayscale')
-X_test = image_dataset_from_directory('isochronous-dataset', validation_split=0.2, subset='validation', seed=0, image_size=(image_height, image_width), label_mode='categorical', color_mode='grayscale')
+X_train = image_dataset_from_directory('isochronous-dataset', validation_split=0.2, subset='training', seed=0, image_size=(image_height, image_width), label_mode='categorical', color_mode='grayscale', batch_size=batch_size)
+X_test = image_dataset_from_directory('isochronous-dataset', validation_split=0.2, subset='validation', seed=0, image_size=(image_height, image_width), label_mode='categorical', color_mode='grayscale', batch_size=batch_size)
 
 for image_batch, labels_batch in X_train:
     print(image_batch.shape)
@@ -28,13 +29,15 @@ from keras.layers.experimental.preprocessing import Rescaling
 from keras.optimizers import SGD
 from tensorflow.keras import regularizers
 
-num_classes = 62
+num_classes = len(class_names)
 
 model = Sequential([
   Rescaling(1.0 / 255, input_shape=(image_height, image_width, 1)),
   Conv2D(64, (3, 3), activation='relu'),
   MaxPooling2D((2, 2)),
   Conv2D(64, (3, 3), activation='relu'),
+  Conv2D(64, (3, 3), activation='relu'),
+  MaxPooling2D((2, 2)),
   Conv2D(64, (3, 3), activation='relu'),
   Conv2D(64, (3, 3), activation='relu'),
   MaxPooling2D((2, 2)),
