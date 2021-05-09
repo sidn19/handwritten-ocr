@@ -3,6 +3,8 @@ import shutil
 
 src = 'D:\Downloads\ocr_data'
 
+only_charas = True
+
 try:
     os.mkdir('dataset')
 except:
@@ -10,7 +12,11 @@ except:
     for directory in os.scandir('dataset'):
         shutil.rmtree(directory.path)
 
-folders = [str(i) for i in range(10)] + [chr(i) for i in range(65, 91)] + [chr(i) for i in range(97, 123)]
+folders = [chr(i) for i in range(65, 91)] + [chr(i) for i in range(97, 123)]
+
+if not only_charas:
+    folders += [str(i) for i in range(10)]
+
 counts = [0] * len(folders)
 
 print('Creating folders')
@@ -21,6 +27,7 @@ for directory in os.scandir(src):
     print('Copying contents of {}'.format(directory.name))
     for inner_directory in os.scandir(directory):
         for index, inner_inner_directory in enumerate(os.scandir(inner_directory)):
-            for item in os.scandir(inner_inner_directory):
-                shutil.copyfile(item.path, 'dataset/{}/{}.png'.format(inner_inner_directory.name, counts[index]))
-                counts[index] += 1
+            if not only_charas or inner_inner_directory.name.isalpha():
+                for item in os.scandir(inner_inner_directory):
+                    shutil.copyfile(item.path, 'dataset/{}/{}.png'.format(inner_inner_directory.name, counts[index]))
+                    counts[index] += 1
