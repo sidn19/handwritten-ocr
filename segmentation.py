@@ -1,15 +1,13 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import pytesseract
 from scipy.signal import argrelmin
+from tensorflow.keras.models import load_model
 
 import os
 
 os.chdir(os.path.dirname(__file__))
 
-
-pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
 def smooth(x, window_len=11, window='hanning'):
     if x.ndim != 1:
@@ -174,7 +172,7 @@ def get_characters(img):
         # print(character_image_64x64)
         # cv2.imshow("r", character_image_64x64)
         # cv2.waitKey()
-        character_images.append(character_image)
+        character_images.append(character_image_64x64)
 
         cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (0,0,255), 2)
         # cv2.line(img2, (character[1], 0), (character[1], img.shape[0]), (0,0,255), 2)
@@ -194,13 +192,17 @@ def get_characters(img):
 
 
 # reads an input image
-img = cv2.imread('s2.png')
+img = cv2.imread('sample.png')
 # img = cv2.resize(img,None,fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
 
 lines = get_lines_y_coordinates(img)
 print("Lines:", lines)
 
 img2 = img.copy()
+
+dataset = 'isochronous-dataset'
+
+model = load_model(dataset + '.model')
 
 for line in lines:
     line_start, line_end = line 
@@ -217,10 +219,14 @@ for line in lines:
         word_string = ""
 
         for character_image in character_images:
-            character = pytesseract.image_to_string(character_image)
-            word_string += character
+            character = model.predict(character_image)
+            print(character)
+            # cv2.imshow("bvn", character_image)
+            # cv2.waitKey()
+            # print(character_image.shape)
+            # word_string += character
 
-        print(word_string)
+        # print(word_string)
 
         cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 1)
 
