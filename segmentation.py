@@ -168,21 +168,55 @@ def get_characters(img):
     characters[0]
     for character in characters:
         character_image = thresh2[0:img.shape[0], character[0]:character[1]]
-        character_image_64x64 = resize_and_pad(character_image, (64, 64), 255)
+        y_start, y_end = 0, character_image.shape[0]
+        x_start, x_end = 0, character_image.shape[1]
+        
+        for r in character_image:
+            if all(c == 255 for c in r):
+                y_start += 1
+            else:
+                break
+        
+        for i in range(character_image.shape[0]-1, 0, -1):
+            if all(c == 255 for c in character_image[i]):
+                y_end -= 1
+            else:
+                break
+        
+        for c in zip(*character_image):
+            if all(r == 255 for r in c):
+                x_start += 1
+            else:
+                break
+
+        for i in range(character_image.shape[1]-1, 0, -1):
+            if all(r == 255 for r in character_image[:,i]):
+                x_end -= 1
+            else:
+                break        
+    
+        character_image_64x64 = resize_and_pad(character_image[y_start:y_end, x_start:x_end], (64, 64), 255)
+
+        # print(x_start, y_start, x_end, y_end)
+        # plt.subplot(2, 2, 1), plt.imshow(character_image)
+        # plt.subplot(2, 2, 2), plt.imshow(character_image[y_start:y_end, x_start:x_end])
+        # plt.subplot(2, 2, 3), plt.imshow(character_image_64x64)
+        # plt.show()
+
         # print(character_image_64x64)
         # cv2.imshow("r", character_image_64x64)
         # cv2.waitKey()
         character_images.append(character_image_64x64)
 
-        cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (0,0,255), 2)
+        # cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (0,0,255), 2)
         # cv2.line(img2, (character[1], 0), (character[1], img.shape[0]), (0,0,255), 2)
     
     
-    plt.subplot(2, 2, 1), plt.imshow(eroded), plt.title("Eroded Image")
-    plt.subplot(2, 2, 2), plt.imshow(thresh2), plt.title("Original Binary Image")
-    plt.subplot(2, 2, 3), plt.plot(freq), plt.title("Frequency")
-    plt.subplot(2, 2, 4), plt.imshow(img2), plt.title("Segmentation")
-    plt.show()
+    # plt.subplot(2, 2, 1), plt.imshow(eroded), plt.title("Eroded Image")
+    # plt.subplot(2, 2, 2), plt.imshow(thresh2), plt.title("Original Binary Image")
+    # plt.subplot(2, 2, 3), plt.plot(freq), plt.title("Frequency")
+    # plt.subplot(2, 2, 4), plt.imshow(img2), plt.title("Segmentation")
+    # plt.show()
 
     # for character in character_images:
     #     cv2.imshow("g", character)
@@ -196,13 +230,14 @@ img = cv2.imread('sample.png')
 # img = cv2.resize(img,None,fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
 
 lines = get_lines_y_coordinates(img)
-print("Lines:", lines)
 
 img2 = img.copy()
 
 dataset = 'isochronous-dataset'
 
 model = load_model(dataset + '.model')
+
+letters="AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789"
 
 for line in lines:
     line_start, line_end = line 
@@ -217,10 +252,23 @@ for line in lines:
         character_images = get_characters(word_img)
 
         word_string = ""
+        word_batch = []
 
         for character_image in character_images:
-            character = model.predict(character_image)
-            print(character)
+            character_image_3d = np.array([[[0]]*64]*64)
+
+            for i in range(64):
+                for j in range(64):
+                    character_image_3d[i][j][0] = character_image[i][j]
+            
+            word_batch.append(character_image_3d)
+        
+        # print(np.array(word_batch).shape)
+        word_predict = model.predict_classes(np.array(word_batch))
+        print(word_predict)
+        print([letters[predicted_class] for predicted_class in word_predict])
+
+            # print(character)
             # cv2.imshow("bvn", character_image)
             # cv2.waitKey()
             # print(character_image.shape)
@@ -229,7 +277,3 @@ for line in lines:
         # print(word_string)
 
         cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 1)
-
-# cv2.imwrite('fd.jpg', img2)
-# cv2.imshow("dhf", img2)
-# cv2.waitKey()
