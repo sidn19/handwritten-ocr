@@ -236,10 +236,6 @@ def get_characters(img):
 
         character_images.append(character_image_64x64)
 
-        # cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (0,0,255), 2)
-        # cv2.line(img2, (character[1], 0), (character[1], img.shape[0]), (0,0,255), 2)
-
-
     return character_images
 
 
@@ -263,15 +259,6 @@ def image_to_text(path):
         line_img = img[line_start:line_end, 0:img.shape[1]]
         cv2.rectangle(img2, (0, line_start), (img.shape[1], line_end), (0, 0, 255), 1)
 
-        # gray = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
-        # ret, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-
-        # plt.subplot(3, 1, 1), plt.imshow(thresh1)
-        # freq = np.array([sum(column) // 255 for column in zip(*thresh1)])
-        # plt.subplot(3, 1, 2), plt.plot(freq)
-        # plt.subplot(3, 1, 3), plt.plot(smooth(freq, 30))
-        # plt.show()
-
         word_blocks = get_words_x_coordinates(line_img)
 
         line = ""
@@ -280,25 +267,7 @@ def image_to_text(path):
             word_start, word_end = word_block
             word_img = img[line_start:line_end, word_start:word_end]
             character_images = get_characters(word_img)
-
-            # gray = cv2.cvtColor(word_img, cv2.COLOR_BGR2GRAY)
-            # ret, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-
-
-            # rect_kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 1))
-            # rect_kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 100))
-            # eroded = cv2.erode(thresh1, rect_kernel1)
-            # dilation = cv2.dilate(eroded, rect_kernel2, iterations=1)
-
-            # plt.subplot(4, 1, 1), plt.imshow(eroded)
-            # plt.subplot(4, 1, 2), plt.imshow(dilation)
-            # freq = np.array([sum(column) // 255 for column in zip(*dilation)])
-            # plt.subplot(4, 1, 3), plt.plot(freq)
-            # plt.subplot(4, 1, 4), plt.plot(smooth(freq, 15))
-            # plt.show()
             
-            # word_string = pytesseract.image_to_string(word_img)
-            # print(word_string)
             word_batch = []
 
             for character_image in character_images:
@@ -309,24 +278,11 @@ def image_to_text(path):
                         character_image_3d[i][j][0] = character_image[i][j]
                 
                 word_batch.append(character_image_3d)
-
-                # cv2.imshow("bvn", character_image)
-                # cv2.waitKey()
             
-            # print(np.array(word_batch).shape)
             word_predict = model.predict_classes(np.array(word_batch))
-            # print(word_predict)
             word_string = "".join([letters[predicted_class] for predicted_class in word_predict])
 
             line += word_string + ' '
-
-            # print(character)
-            # cv2.imshow("bvn", character_image)
-            # cv2.waitKey()
-            # print(character_image.shape)
-            # word_string += character
-
-            # print(word_string)
 
             cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 1)
         
