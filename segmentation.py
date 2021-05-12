@@ -3,10 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import argrelmin
 from tensorflow.keras.models import load_model
+# import pytesseract
 
 import os
 
 os.chdir(os.path.dirname(__file__))
+
+# pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
 
 def smooth(x, window_len=11, window='hanning'):
@@ -100,18 +103,15 @@ def get_words_x_coordinates(img):
         gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
 
     rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (18, 1))
-
-    # Appplying dilation on the threshold image
     dilation = cv2.dilate(thresh1, rect_kernel, iterations=1)
 
-    freq = [sum(column) // 255 for column in zip(*dilation)]
+    freq = smooth(np.array([sum(column) // 255 for column in zip(*dilation)]), 20)
 
     words = hard_seggregate(freq, 1)
 
     return words
 
 def resize_and_pad(img, size, padColor=0):
-
     h, w = img.shape[:2]
     sh, sw = size
 
@@ -151,6 +151,17 @@ def resize_and_pad(img, size, padColor=0):
 
     return scaled_img
 
+def expand_to_square(img):
+    rows, columns = img.shape
+
+    if rows == columns:
+        return img
+    
+    padding = abs(rows - columns) // 2
+    p=np.ones((rows, padding) if rows > columns else (padding, columns), np.uint8) * 255
+    return np.concatenate((p,img,p), axis=1 if rows > columns else 0)
+
+
 def get_characters(img):
     img = cv2.resize(img,None,fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
     img2 = img.copy()
@@ -161,6 +172,25 @@ def get_characters(img):
 
     eroded = cv2.erode(thresh1, kernel)
     freq = np.array([sum(column) // 255 for column in zip(*eroded)])
+    
+
+    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # ret, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
+    # ret, thresh2 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY)
+
+    # rect_kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    # rect_kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 100))
+    # eroded = cv2.erode(thresh1, rect_kernel1)
+    # dilation = cv2.dilate(eroded, rect_kernel2, iterations=1)
+
+    # plt.subplot(4, 1, 1), plt.imshow(eroded)
+    # plt.subplot(4, 1, 2), plt.imshow(dilation)
+    # freq = np.array([sum(column) // 255 for column in zip(*dilation)])
+    # plt.subplot(4, 1, 3), plt.plot(freq)
+    # freq = smooth(freq, 15)
+    # minima = list(argrelmin(freq))
+    # plt.subplot(4, 1, 4), plt.plot(smooth(freq, 15)), plt.scatter(*[x for x in zip(*[(m, freq[m]) for m in minima])])
+    # plt.show()
 
     characters = hard_seggregate(freq, 1)
 
@@ -193,80 +223,102 @@ def get_characters(img):
             if all(r == 255 for r in character_image[:,i]):
                 x_end -= 1
             else:
-                break        
+                break
     
-        character_image_64x64 = resize_and_pad(character_image[y_start:y_end, x_start:x_end], (64, 64), 255)
+        cropped_character_image = character_image[y_start:y_end, x_start:x_end]
+        squared_character_image = expand_to_square(cropped_character_image)
 
-        # print(x_start, y_start, x_end, y_end)
-        # plt.subplot(2, 2, 1), plt.imshow(character_image)
-        # plt.subplot(2, 2, 2), plt.imshow(character_image[y_start:y_end, x_start:x_end])
-        # plt.subplot(2, 2, 3), plt.imshow(character_image_64x64)
-        # plt.show()
+        character_image_32x32 = resize_and_pad(squared_character_image, (32, 32), 255)
+        horizontal_pad = np.ones((32, 16), np.uint8) * 255
+        tmp=np.concatenate((horizontal_pad, character_image_32x32, horizontal_pad), axis=1)
+        vertical_pad = np.ones((16, 64), np.uint8) * 255
+        character_image_64x64=np.concatenate((vertical_pad, tmp, vertical_pad), axis=0)
 
-        # print(character_image_64x64)
-        # cv2.imshow("r", character_image_64x64)
-        # cv2.waitKey()
         character_images.append(character_image_64x64)
 
         # cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (0,0,255), 2)
         # cv2.line(img2, (character[1], 0), (character[1], img.shape[0]), (0,0,255), 2)
-    
-    
-    # plt.subplot(2, 2, 1), plt.imshow(eroded), plt.title("Eroded Image")
-    # plt.subplot(2, 2, 2), plt.imshow(thresh2), plt.title("Original Binary Image")
-    # plt.subplot(2, 2, 3), plt.plot(freq), plt.title("Frequency")
-    # plt.subplot(2, 2, 4), plt.imshow(img2), plt.title("Segmentation")
-    # plt.show()
 
-    # for character in character_images:
-    #     cv2.imshow("g", character)
-    #     cv2.waitKey()
 
     return character_images
 
 
-# reads an input image
-img = cv2.imread('sample.png')
-# img = cv2.resize(img,None,fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
+def image_to_text(path):
+    img = cv2.imread(path)
 
-lines = get_lines_y_coordinates(img)
+    line_blocks = get_lines_y_coordinates(img)
 
-img2 = img.copy()
+    img2 = img.copy()
 
-dataset = 'isochronous-dataset'
+    dataset = 'isochronous-dataset'
 
-model = load_model(dataset + '.model')
+    model = load_model(dataset + '.model')
 
-letters="AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789"
+    letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
-for line in lines:
-    line_start, line_end = line 
-    line_img = img[line_start:line_end, 0:img.shape[1]]
-    cv2.rectangle(img2, (0, line_start), (img.shape[1], line_end), (0, 0, 255), 1)
+    lines = []
 
-    words = get_words_x_coordinates(line_img)
+    for line_block in line_blocks:
+        line_start, line_end = line_block 
+        line_img = img[line_start:line_end, 0:img.shape[1]]
+        cv2.rectangle(img2, (0, line_start), (img.shape[1], line_end), (0, 0, 255), 1)
 
-    for word in words:
-        word_start, word_end = word
-        word_img = img[line_start:line_end, word_start:word_end]
-        character_images = get_characters(word_img)
+        # gray = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
+        # ret, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
 
-        word_string = ""
-        word_batch = []
+        # plt.subplot(3, 1, 1), plt.imshow(thresh1)
+        # freq = np.array([sum(column) // 255 for column in zip(*thresh1)])
+        # plt.subplot(3, 1, 2), plt.plot(freq)
+        # plt.subplot(3, 1, 3), plt.plot(smooth(freq, 30))
+        # plt.show()
 
-        for character_image in character_images:
-            character_image_3d = np.array([[[0]]*64]*64)
+        word_blocks = get_words_x_coordinates(line_img)
 
-            for i in range(64):
-                for j in range(64):
-                    character_image_3d[i][j][0] = character_image[i][j]
+        line = ""
+
+        for word_block in word_blocks:
+            word_start, word_end = word_block
+            word_img = img[line_start:line_end, word_start:word_end]
+            character_images = get_characters(word_img)
+
+            # gray = cv2.cvtColor(word_img, cv2.COLOR_BGR2GRAY)
+            # ret, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
+
+
+            # rect_kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 1))
+            # rect_kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 100))
+            # eroded = cv2.erode(thresh1, rect_kernel1)
+            # dilation = cv2.dilate(eroded, rect_kernel2, iterations=1)
+
+            # plt.subplot(4, 1, 1), plt.imshow(eroded)
+            # plt.subplot(4, 1, 2), plt.imshow(dilation)
+            # freq = np.array([sum(column) // 255 for column in zip(*dilation)])
+            # plt.subplot(4, 1, 3), plt.plot(freq)
+            # plt.subplot(4, 1, 4), plt.plot(smooth(freq, 15))
+            # plt.show()
             
-            word_batch.append(character_image_3d)
-        
-        # print(np.array(word_batch).shape)
-        word_predict = model.predict_classes(np.array(word_batch))
-        print(word_predict)
-        print([letters[predicted_class] for predicted_class in word_predict])
+            # word_string = pytesseract.image_to_string(word_img)
+            # print(word_string)
+            word_batch = []
+
+            for character_image in character_images:
+                character_image_3d = np.array([[[0]]*64]*64)
+
+                for i in range(64):
+                    for j in range(64):
+                        character_image_3d[i][j][0] = character_image[i][j]
+                
+                word_batch.append(character_image_3d)
+
+                # cv2.imshow("bvn", character_image)
+                # cv2.waitKey()
+            
+            # print(np.array(word_batch).shape)
+            word_predict = model.predict_classes(np.array(word_batch))
+            # print(word_predict)
+            word_string = "".join([letters[predicted_class] for predicted_class in word_predict])
+
+            line += word_string + ' '
 
             # print(character)
             # cv2.imshow("bvn", character_image)
@@ -274,6 +326,17 @@ for line in lines:
             # print(character_image.shape)
             # word_string += character
 
-        # print(word_string)
+            # print(word_string)
 
-        cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 1)
+            cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 1)
+        
+        lines.append(line)
+
+    cv2.imshow("Bounding Boxes", img2)
+    cv2.waitKey()
+
+    return lines
+
+
+for line in image_to_text('samples\\sample2.jpeg'):
+    print(line)
