@@ -5,21 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OCR</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
     <style>
         html, body {
             height: 100%;
+            background-color: #dddddd;
         }
 
         body.dark {
             background-color: #000;
             color: #ddd;
-        }
-        body.dark .swal-modal {
-            background-color: #000;
-        }
-        body.dark .swal-button {
-            background-color: #333;
         }
         body.dark .form-check-input:checked {
             background-color: #333;
@@ -41,31 +36,104 @@
             cursor: pointer;
         }
 
-        .photo-div {
-            position: absolute;
-            bottom: 1rem;
-            left: calc(50% - 25px);         
+        .photo-div svg {
+            height: 2.5rem;
+            width: 2.5rem;
         }
 
-        .photo-div svg {
-            height: 50px;
-            width: 50px;
+        .card-body {            
+            transition: 0.3s;
+        }
+
+        .card-body:hover {
+            background-color: #c9c9c9;
             cursor: pointer;
+        }
+
+        body.dark .card-body:hover {
+            background-color: #444;
+            cursor: pointer;
+        }
+
+        #webcam {
+            transform: scale(1, 1) !important;
         }
     </style>
 </head>
 <body>
     <div class="d-flex align-items-center justify-content-center h-100">
-        <video id="webcam" autoplay playsinline style="max-width: 100%;"></video>        
+        <div class="card text-dark bg-light shadow-sm">
+            <div class="card-img-top" style="line-height: 0;">
+                <video id="webcam" autoplay playsinline style="max-width: 100%;"></video>
+            </div>
+            <div class="card-body" onclick="captureImage()">
+                <div class="photo-div d-flex justify-content-center align-items-center">
+                    <div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; display: hidden;" id="loading-spinner"></div>
+                    <i data-feather="aperture" id="capture-button"></i>
+                </div>
+            </div>
+        </div>        
     </div>
-    <div class="photo-div" onclick="captureImage()">
-        <i data-feather="aperture"></i>
-    </div>
-    <div class="menu-div">
-        <i data-feather="settings" onclick="openSettings()"></i>
-        <i data-feather="clock"></i>
+    <div class="menu-div card p-1 shadow-sm rounded-pill">
+        <i data-feather="settings" data-bs-target="#settings-modal" data-bs-toggle="modal"></i>
+        <i data-feather="clock" data-bs-target="#history-modal" data-bs-toggle="modal"></i>
     </div>
     <canvas id="canvas" class="d-none"></canvas>
+    <!-- History Modal -->
+    <div class="modal fade" data-bs-backdrop="static" tabindex="-1" id="history-modal">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="history-list"></div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Settings Modal -->
+    <div class="modal fade" data-bs-backdrop="static" tabindex="-1" id="settings-modal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-check form-switch d-flex align-items-center mb-3">
+                        <input onchange="globalState.set('darkMode', event.target.checked)" class="form-check-input mt-0" style="font-size: 2rem; margin-left: 0rem;" type="checkbox" id="darkMode">
+                        <label class="form-check-label" style="font-size: 1.5rem; margin-left: 1rem;" for="darkMode">Dark Mode</label>
+                    </div>
+                    <div class="form-check form-switch d-flex align-items-center mt-3">
+                        <input onchange="globalState.set('automaticSave', event.target.checked)" class="form-check-input mt-0" style="font-size: 2rem; margin-left: 0rem;" type="checkbox" id="automaticSave">
+                        <label class="form-check-label" style="font-size: 1.5rem;  margin-left: 1rem;" for="automaticSave">Automatically Save Results</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Result Modal -->
+    <div class="modal fade" data-bs-backdrop="static" tabindex="-1" id="result-modal">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="result-div" style="white-space: pre-line"></div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Toast -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
         <div id="toast" class="toast align-items-center text-white border-0 hide" role="alert" aria-live="assertive" aria-atomic="true">
@@ -76,24 +144,30 @@
         </div>
     </div>
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.js" integrity="sha256-HwWONEZrpuoh951cQD1ov2HUK5zA5DwJ1DNUXaM6FsY=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
-    <script> 
+    <script>
+        const localStorageKey = 'app-state';
         // global state
         const globalState = {};
-        globalState.internalSnapshot = localStorage.getItem('application-state');
+        globalState.internalSnapshot = localStorage.getItem(localStorageKey);
         if (globalState.internalSnapshot !== null) {
             globalState.internalSnapshot = JSON.parse(globalState.internalSnapshot);
         }
         else {
             globalState.internalSnapshot = {
                 darkMode: false,
-                automaticSave: true
+                automaticSave: true,
+                history: []
             }
         }
+        // always override
+        globalState.internalSnapshot.processing = false;
+        globalState.internalSnapshot.loadedHistoryItems = 0;
         // state functions
         globalState.observers = [];
         globalState.set = (key, value) => {
@@ -108,18 +182,53 @@
 
         // register an observer
         const stateObserver = snapshot => {
-            console.log(snapshot);
             if (snapshot.darkMode) {
                 document.body.classList.add('dark');
+                for (let item of document.getElementsByClassName('card')) {
+                    item.classList.remove('text-dark', 'bg-light');
+                    item.classList.add('text-white', 'bg-dark');
+                }
+                for (let item of document.getElementsByClassName('modal-content')) {
+                    item.classList.remove('text-dark', 'bg-light');
+                    item.classList.add('text-white', 'bg-dark');
+                }
             }
             else {
                 document.body.classList.remove('dark');
+                for (let item of document.getElementsByClassName('card')) {
+                    item.classList.add('text-dark', 'bg-light');
+                    item.classList.remove('text-white', 'bg-dark');
+                }
+                for (let item of document.getElementsByClassName('modal-content')) {
+                    item.classList.add('text-dark', 'bg-light');
+                    item.classList.remove('text-white', 'bg-dark');
+                }
+            }
+
+            if (snapshot.processing) {
+                $('#loading-spinner').show();
+                $('#capture-button').hide();
+            }
+            else {
+                $('#loading-spinner').hide();
+                $('#capture-button').show();
+            }
+
+            if (snapshot.loadedHistoryItems < snapshot.history.length) {
+                for (let i = snapshot.loadedHistoryItems; i < snapshot.history.length; ++i) {
+                    $('#history-list').append(`
+                        <div class="text-muted">${snapshot.history[i].date}</div>
+                        <div style="white-space: pre-line">${snapshot.history[i].text}</div>
+                    `);
+                }
+                globalState.internalSnapshot.loadedHistoryItems = snapshot.history.length;
             }
         }
         globalState.register(stateObserver);
         // init
         stateObserver(globalState.internalSnapshot);
-        
+        $('#darkMode').prop('checked', globalState.internalSnapshot.darkMode);
+        $('#automaticSave').prop('checked', globalState.internalSnapshot.automaticSave);
         feather.replace();
 
         const webcamElement = document.getElementById('webcam');
@@ -128,38 +237,40 @@
         const webcam = new Webcam(webcamElement, 'environment', canvasElement, null);
         webcam.start()
         .catch(err => {
-            swal('No Camera Found!', 'Sorry, this application requires a camera to function!', 'error');
+            toast('Sorry, this application requires a camera to function!', 'error');
         });
 
         function captureImage() {
+            if (globalState.internalSnapshot.processing) {
+                return toast('Please wait for your previous image to finish processing!', 'error');
+            }
+            globalState.set('processing', true);
+
             const image = webcam.snap();
             axios.post('/', { image }).then(response => {
-                swal('Result', response.data, 'success');
+                if (response.data.trim().length > 0) {
+                    $('#result-div').text(response.data);
+                    $('#result-modal').modal('show');
+
+                    if (globalState.internalSnapshot.automaticSave) {
+                        globalState.set('history', globalState.internalSnapshot.history.concat({
+                            text: response.data,
+                            date: new Date().toLocaleString()
+                        }));
+                        localStorage.setItem(localStorageKey, JSON.stringify(globalState.internalSnapshot));
+                    }
+                }
+                else {
+                    toast('Sorry, we could not find any text in the image!', 'error');
+                }
             }).catch(error => {
-                swal('Error!', error.message, 'error');
-            });
+                toast(error.message, 'error');
+            }).finally(() => globalState.set('processing', false));
         }
 
-        function openSettings() {
-            const content = document.createElement('div');
-            content.style.textAlign = 'left';
-            content.style.marginTop = '4rem';
-
-            content.innerHTML = `
-            <div class="form-check form-switch d-flex align-items-center mb-3">
-                <input ${globalState.internalSnapshot.darkMode ? 'checked' : ''} onchange="globalState.set('darkMode', event.target.checked)" class="form-check-input mt-0" style="font-size: 2rem; margin-left: 0rem;" type="checkbox" id="darkMode">
-                <label class="form-check-label" style="font-size: 1.5rem; margin-left: 1rem;" for="darkMode">Dark Mode</label>
-            </div>
-            <div class="form-check form-switch d-flex align-items-center mt-3">
-                <input ${globalState.internalSnapshot.automaticSave ? 'checked' : ''} onchange="globalState.set('automaticSave', event.target.checked)" class="form-check-input mt-0" style="font-size: 2rem; margin-left: 0rem;" type="checkbox" id="automaticSave">
-                <label class="form-check-label" style="font-size: 1.5rem;  margin-left: 1rem;" for="automaticSave">Automatically Save Results</label>
-            </div>
-            `;
-            swal({ content, button: 'Save' }).then(save => {
-                if (save) {
-                    localStorage.setItem('application-state', JSON.stringify(globalState.internalSnapshot));
-                }
-            })
+        function saveSettings() {
+            localStorage.setItem(localStorageKey, JSON.stringify(globalState.internalSnapshot));
+            $('#settings-modal').modal('hide');
         }
 
         function toast(body, type = 'notice') {
