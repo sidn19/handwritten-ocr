@@ -239,18 +239,18 @@ def get_characters(img):
     return character_images
 
 
-def image_to_text(path):
-    img = cv2.imread(path)
+def image_to_text(img):
+    # img = cv2.imread(path)
 
     line_blocks = get_lines_y_coordinates(img)
 
     img2 = img.copy()
 
-    dataset = 'isochronous-dataset'
+    dataset = 'lowercase'
 
     model = load_model(dataset + '.model')
 
-    letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    letters = "abcdefghijklmnopqrstuvwxyz"
 
     lines = []
 
@@ -294,5 +294,5 @@ def image_to_text(path):
     return lines
 
 
-for line in image_to_text('samples\\sample2.jpeg'):
-    print(line)
+# for line in image_to_text('samples\\sample2.jpeg'):
+#     print(line)
