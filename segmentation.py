@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelmin
 from tensorflow.keras.models import load_model
 from PIL import Image
+from spellchecker import SpellChecker
 # import pytesseract
 
 import os
@@ -12,6 +13,7 @@ os.chdir(os.path.dirname(__file__))
 
 # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
+spell = SpellChecker()
 
 def smooth(x, window_len=11, window='hanning'):
     if x.ndim != 1:
@@ -287,6 +289,7 @@ def image_to_text(img):
             
             word_predict = model.predict_classes(np.array(word_batch))
             word_string = "".join([letters[predicted_class] for predicted_class in word_predict])
+            # print(word_string,spell.correction(word_string))
 
             line += word_string + ' '
 
@@ -294,11 +297,11 @@ def image_to_text(img):
         
         lines.append(line)
 
-    cv2.imshow("Bounding Boxes", img2)
-    cv2.waitKey()
+    # cv2.imshow("Bounding Boxes", img2)
+    # cv2.waitKey()
 
-    return lines
+    return '\n'.join(lines)
 
 
-# for line in image_to_text('samples\\sample2.jpeg'):
+# for line in image_to_text(Image.open('samples\\sample2.png')):
 #     print(line)

@@ -306,7 +306,10 @@
                     }
                 }).catch(error => {
                     toast(error.message, 'error');
-                }).finally(() => globalState.set('processing', false));
+                }).finally(() => {
+                    globalState.set('processing', false);
+                    $('#file-upload').val("");
+                });
             }
             fileReader.readAsDataURL(document.getElementById('file-upload').files[0]);
         }
