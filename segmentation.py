@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import argrelmin
 from tensorflow.keras.models import load_model
+from PIL import Image
 # import pytesseract
 
 import os
@@ -238,10 +239,16 @@ def get_characters(img):
 
     return character_images
 
+def pil_to_opencv(img):
+    # mirror
+    img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    img = img.convert('RGB')
+    opencv_img = np.array(img)
+    return opencv_img[:, :, ::-1].copy()
 
 def image_to_text(img):
     # img = cv2.imread(path)
-
+    img = pil_to_opencv(img)
     line_blocks = get_lines_y_coordinates(img)
 
     img2 = img.copy()

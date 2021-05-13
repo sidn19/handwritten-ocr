@@ -233,8 +233,10 @@
 
         const webcamElement = document.getElementById('webcam');
         const canvasElement = document.getElementById('canvas');
+        
 
         const webcam = new Webcam(webcamElement, 'environment', canvasElement, null);
+        
         webcam.start()
         .catch(err => {
             toast('Sorry, this application requires a camera to function!', 'error');

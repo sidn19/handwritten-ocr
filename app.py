@@ -19,5 +19,4 @@ def get_text():
     img = Image.open(BytesIO(data))
     return image_to_text(img)
 
-
 run(reloader=True)
