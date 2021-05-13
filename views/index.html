@@ -70,6 +70,7 @@
                     <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;" id="loading-spinner"></div>
                     <i data-feather="aperture" id="capture-button" onclick="captureImage()" style="display: none;"></i>
                     <i data-feather="upload" id="upload-button" onclick="uploadImage()" style="display: none;"></i>
+                    <input type="file" id="file-upload" style="display: none;" onchange="uploadImageFile()" accept="image/x-png,image/gif,image/jpeg" />
                 </div>
             </div>
         </div>        
@@ -276,28 +277,38 @@
             if (globalState.internalSnapshot.processing) {
                 return toast('Please wait for your previous image to finish processing!', 'error');
             }
+            $('#file-upload').click();
+        }
+
+        function uploadImageFile() {
+            if (globalState.internalSnapshot.processing) {
+                return toast('Please wait for your previous image to finish processing!', 'error');
+            }
             globalState.set('processing', true);
 
-            const image = null;
-            axios.post('/capture', { image }).then(response => {
-                if (response.data.trim().length > 0) {
-                    $('#result-div').text(response.data);
-                    $('#result-modal').modal('show');
+            const fileReader = new FileReader();
+            fileReader.onload = () => {
+                axios.post('/upload', { image: fileReader.result }).then(response => {
+                    if (response.data.trim().length > 0) {
+                        $('#result-div').text(response.data);
+                        $('#result-modal').modal('show');
 
-                    if (globalState.internalSnapshot.automaticSave) {
-                        globalState.set('history', globalState.internalSnapshot.history.concat({
-                            text: response.data,
-                            date: new Date().toLocaleString()
-                        }));
-                        localStorage.setItem(localStorageKey, JSON.stringify(globalState.internalSnapshot));
+                        if (globalState.internalSnapshot.automaticSave) {
+                            globalState.set('history', globalState.internalSnapshot.history.concat({
+                                text: response.data,
+                                date: new Date().toLocaleString()
+                            }));
+                            localStorage.setItem(localStorageKey, JSON.stringify(globalState.internalSnapshot));
+                        }
                     }
-                }
-                else {
-                    toast('Sorry, we could not find any text in the image!', 'error');
-                }
-            }).catch(error => {
-                toast(error.message, 'error');
-            }).finally(() => globalState.set('processing', false));
+                    else {
+                        toast('Sorry, we could not find any text in the image!', 'error');
+                    }
+                }).catch(error => {
+                    toast(error.message, 'error');
+                }).finally(() => globalState.set('processing', false));
+            }
+            fileReader.readAsDataURL(document.getElementById('file-upload').files[0]);
         }
 
         function saveSettings() {
