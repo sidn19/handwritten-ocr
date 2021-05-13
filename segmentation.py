@@ -241,7 +241,6 @@ def get_characters(img):
 
 def pil_to_opencv(img):
     # mirror
-    img = img.transpose(Image.FLIP_LEFT_RIGHT)
     img = img.convert('RGB')
     opencv_img = np.array(img)
     return opencv_img[:, :, ::-1].copy()

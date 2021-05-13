@@ -12,11 +12,12 @@ BaseRequest.MEMFILE_MAX = 10 * 1024 * 1024 # 10 MB
 def index():
     pass
 
-@post('/')
-def get_text():
+@post('/capture')
+def capture():
     data = request.json['image'].replace('data:image/png;base64,', '')
     data = base64.b64decode(data)
     img = Image.open(BytesIO(data))
+    img = img.transpose(Image.FLIP_LEFT_RIGHT)
     return image_to_text(img)
 
 run(reloader=True)

@@ -36,21 +36,20 @@
             cursor: pointer;
         }
 
-        .photo-div svg {
-            height: 2.5rem;
-            width: 2.5rem;
-        }
-
-        .card-body {            
+        .card-body svg {            
             transition: 0.3s;
+            height: 3rem;
+            width: 3rem;
+            padding: 0.6rem;
+            border-radius: 50%;
         }
 
-        .card-body:hover {
+        .card-body svg:hover {
             background-color: #c9c9c9;
             cursor: pointer;
         }
 
-        body.dark .card-body:hover {
+        body.dark .card-body svg:hover {
             background-color: #444;
             cursor: pointer;
         }
@@ -66,10 +65,11 @@
             <div class="card-img-top" style="line-height: 0;">
                 <video id="webcam" autoplay playsinline style="max-width: 100%;"></video>
             </div>
-            <div class="card-body" onclick="captureImage()">
-                <div class="photo-div d-flex justify-content-center align-items-center">
-                    <div class="spinner-border" role="status" style="width: 2.5rem; height: 2.5rem; display: hidden;" id="loading-spinner"></div>
-                    <i data-feather="aperture" id="capture-button"></i>
+            <div class="card-body">
+                <div class="photo-div d-flex justify-content-center align-items-center" style="gap: 2rem">
+                    <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;" id="loading-spinner"></div>
+                    <i data-feather="aperture" id="capture-button" onclick="captureImage()" style="display: none;"></i>
+                    <i data-feather="upload" id="upload-button" onclick="uploadImage()" style="display: none;"></i>
                 </div>
             </div>
         </div>        
@@ -208,10 +208,12 @@
             if (snapshot.processing) {
                 $('#loading-spinner').show();
                 $('#capture-button').hide();
+                $('#upload-button').hide();
             }
             else {
                 $('#loading-spinner').hide();
                 $('#capture-button').show();
+                $('#upload-button').show();
             }
 
             if (snapshot.loadedHistoryItems < snapshot.history.length) {
@@ -249,7 +251,35 @@
             globalState.set('processing', true);
 
             const image = webcam.snap();
-            axios.post('/', { image }).then(response => {
+            axios.post('/capture', { image }).then(response => {
+                if (response.data.trim().length > 0) {
+                    $('#result-div').text(response.data);
+                    $('#result-modal').modal('show');
+
+                    if (globalState.internalSnapshot.automaticSave) {
+                        globalState.set('history', globalState.internalSnapshot.history.concat({
+                            text: response.data,
+                            date: new Date().toLocaleString()
+                        }));
+                        localStorage.setItem(localStorageKey, JSON.stringify(globalState.internalSnapshot));
+                    }
+                }
+                else {
+                    toast('Sorry, we could not find any text in the image!', 'error');
+                }
+            }).catch(error => {
+                toast(error.message, 'error');
+            }).finally(() => globalState.set('processing', false));
+        }
+
+        function uploadImage() {
+            if (globalState.internalSnapshot.processing) {
+                return toast('Please wait for your previous image to finish processing!', 'error');
+            }
+            globalState.set('processing', true);
+
+            const image = null;
+            axios.post('/capture', { image }).then(response => {
                 if (response.data.trim().length > 0) {
                     $('#result-div').text(response.data);
                     $('#result-modal').modal('show');
