@@ -1,4 +1,4 @@
-from bottle import get, post, run, view, request, BaseRequest, TEMPLATES
+from bottle import get, post, run, view, request, BaseRequest
 from PIL import Image
 from io import BytesIO
 import pytesseract
