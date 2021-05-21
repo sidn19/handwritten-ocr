@@ -61,7 +61,7 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 model.summary()
 
 # %%
-history = model.fit(X_train, validation_data=X_test, epochs=10, use_multiprocessing=True, workers=8, max_queue_size=500)
+history = model.fit(X_train, validation_data=X_test, epochs=6)
 
 def print_to_file(s):
     with open('modelsummary.txt','a') as f:
