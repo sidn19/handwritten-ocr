@@ -4,16 +4,29 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelmin
 from tensorflow.keras.models import load_model
 from PIL import Image
-from spellchecker import SpellChecker
+# from spellchecker import SpellChecker
 # import pytesseract
 
 import os
 
 os.chdir(os.path.dirname(__file__))
 
+import tensorflow as tf
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        # Currently, memory growth needs to be the same across GPUs
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+    except RuntimeError as e:
+        # Memory growth must be set before GPUs have been initialized
+        print(e)
+
 # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
-spell = SpellChecker()
+# spell = SpellChecker()
 
 def smooth(x, window_len=11, window='hanning'):
     if x.ndim != 1:
