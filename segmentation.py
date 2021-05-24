@@ -1,14 +1,18 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import argrelmin
+# from scipy.signal import argrelmin
 from tensorflow.keras.models import load_model
 from PIL import Image
-from skimage.morphology import skeletonize
+# from skimage.morphology import skeletonize
 
 import os
 
 os.chdir(os.path.dirname(__file__))
+
+
+# pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+
 
 import tensorflow as tf
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -22,6 +26,7 @@ if gpus:
     except RuntimeError as e:
         # Memory growth must be set before GPUs have been initialized
         print(e)
+
 
 
 def smooth(x, window_len=11, window='hanning'):
@@ -80,45 +85,12 @@ def get_lines_y_coordinates(img):
     #noise removal
     eroded = cv2.erode(thresh1, rect_kernel1)
     dilation = cv2.dilate(eroded, rect_kernel2, iterations=1)
-
-    # plt.subplot(3,1,1), plt.imshow(thresh1)
-    # plt.subplot(3,1,2), plt.imshow(eroded)
-    # plt.subplot(3,1,3), plt.imshow(dilation)
-    # plt.plot()
-
-    # cv2.imshow("sfhs", dilation)
-    # cv2.waitKey()
-    
-
+   
     freq = np.array([sum(row) // 255 for row in dilation])
-
-    # freq = np.sum(dilation,axis=1,keepdims=True) / 255
-    # print(list(freq))
-
-    # smoothed = smooth(freq, 10)
-
-    # mins = argrelmin(smoothed, order=2)
-    # arr_mins = np.array(mins)
-
-    # # print(list(*arr_mins))
-    # plt.plot(freq)
-    # plt.plot(smoothed)
-    # plt.plot(arr_mins, smoothed[arr_mins], "x")
-    # plt.show()
-
-    # x1 = 0
-    # lines = []
-
-    # for x2 in list(*arr_mins):
-    #     lines.append((x1,x2))
-    #     x1=x2
-
-    # lines.append((x1,img.shape[1]))
 
     lines = hard_seggregate(freq, 10)
 
     return lines
-
 
 def get_words_x_coordinates(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -132,14 +104,9 @@ def get_words_x_coordinates(img):
 
     words = hard_seggregate(freq, 1)
 
-    # plt.subplot(2, 1, 1), plt.imshow(dilation)
-    # # freq = np.array([sum(column) // 255 for column in zip(*dilation)])
-    # plt.subplot(2, 1, 2), plt.plot(freq)
-    # plt.show()
-
     return words
 
-def resize_and_pad(img, size, padColor=0):
+def resize_and_pad(img, size, padColor=0):    
     h, w = img.shape[:2]
     sh, sw = size
 
@@ -189,7 +156,6 @@ def expand_to_square(img):
     p=np.ones((rows, padding) if rows > columns else (padding, columns), np.uint8) * 255
     return np.concatenate((p,img,p), axis=1 if rows > columns else 0)
 
-
 def get_characters(img):
     img = cv2.resize(img,None,fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
     img2 = img.copy()
@@ -200,28 +166,22 @@ def get_characters(img):
     # kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1,100))
 
     eroded = cv2.erode(thresh1, kernel1)
-    eroded //= 255
-    skeleton = skeletonize(eroded)
+
+    # eroded //= 255
+    # skeleton = skeletonize(eroded)
     # dilation = cv2.dilate(eroded, kernel2, iterations=1)
 
-    freq = np.array([sum(column) for column in zip(*skeleton)])
+    freq = np.array([sum(column) // 255 for column in zip(*eroded)])
 
-    # plt.subplot(4, 1, 1), plt.imshow(eroded)
-    # plt.subplot(4, 1, 2), plt.imshow(skeleton)
-    # plt.subplot(4, 1, 3), plt.plot(smooth(freq))
-    # plt.show()
-
-    characters = hard_seggregate(smooth(freq), 1)
+    characters = hard_seggregate(freq, 1)
 
     character_images=[]
-    # characters[0]
     for character in characters:
-        character_image = thresh2[0:img.shape[0], character[0]:character[1]]
+        character_image = thresh2[0:img.shape[0], character[0]:character[1]]        
         y_start, y_end = 0, character_image.shape[0]
         x_start, x_end = 0, character_image.shape[1]
 
-        cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (255,0,0), 1)
-        
+
         for r in character_image:
             if all(c == 255 for c in r):
                 y_start += 1
@@ -245,23 +205,18 @@ def get_characters(img):
                 x_end -= 1
             else:
                 break
-    
-        cropped_character_image = character_image[y_start:y_end, x_start:x_end]
-        squared_character_image = expand_to_square(cropped_character_image)
+        
+        if y_end - y_start > 5 and x_end - x_start > 5:    
+            cropped_character_image = character_image[y_start:y_end, x_start:x_end]
+            squared_character_image = expand_to_square(cropped_character_image)
 
-        character_image_32x32 = resize_and_pad(squared_character_image, (32, 32), 255)
-        horizontal_pad = np.ones((32, 16), np.uint8) * 255
-        tmp=np.concatenate((horizontal_pad, character_image_32x32, horizontal_pad), axis=1)
-        vertical_pad = np.ones((16, 64), np.uint8) * 255
-        character_image_64x64=np.concatenate((vertical_pad, tmp, vertical_pad), axis=0)
+            character_image_32x32 = resize_and_pad(squared_character_image, (32, 32), 255)
+            horizontal_pad = np.ones((32, 16), np.uint8) * 255
+            tmp=np.concatenate((horizontal_pad, character_image_32x32, horizontal_pad), axis=1)
+            vertical_pad = np.ones((16, 64), np.uint8) * 255
+            character_image_64x64=np.concatenate((vertical_pad, tmp, vertical_pad), axis=0)
 
-        character_images.append(character_image_64x64)
-    
-    plt.subplot(4, 1, 1), plt.imshow(eroded)
-    plt.subplot(4, 1, 2), plt.imshow(skeleton)
-    plt.subplot(4, 1, 3), plt.plot(smooth(freq))
-    plt.subplot(4, 1, 4), plt.imshow(img2)
-    plt.show()
+            character_images.append(character_image_64x64)
 
     return character_images
 
