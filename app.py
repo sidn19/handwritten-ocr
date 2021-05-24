@@ -13,7 +13,8 @@ def index():
 
 @post('/upload')
 def upload():
-    data = request.json['image'].replace('data:image/png;base64,', '')
+    data = request.json['image']
+    data = data[data.find(',')+1:].strip()
     data = base64.b64decode(data)
     img = Image.open(BytesIO(data))
     return image_to_text(img)

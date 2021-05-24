@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
 from PIL import Image
 # from skimage.morphology import skeletonize
+from spellchecker import SpellChecker
+
+spell = SpellChecker()
 
 import os
 
@@ -175,6 +178,12 @@ def get_characters(img):
 
     characters = hard_seggregate(freq, 1)
 
+    for character in characters:
+        cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (0, 0, 255), 2)
+    
+    plt.imshow(img2)
+    plt.show()
+
     character_images=[]
     for character in characters:
         character_image = thresh2[0:img.shape[0], character[0]:character[1]]        
@@ -248,7 +257,7 @@ def image_to_text(img):
 
         word_blocks = get_words_x_coordinates(line_img)
 
-        line = ""
+        line = []
 
         for word_block in word_blocks:
             word_start, word_end = word_block
@@ -264,21 +273,30 @@ def image_to_text(img):
                     for j in range(64):
                         character_image_3d[i][j][0] = character_image[i][j]
                 
+                # cv2.imshow("character image", character_image)
+                # cv2.waitKey()
+                
                 word_batch.append(character_image_3d)
             
             if word_batch:            
                 word_predict = model.predict_classes(np.array(word_batch))
                 word_string = "".join([letters[predicted_class] for predicted_class in word_predict])
-                # print(word_string,spell.correction(word_string))
+                
+                line.append(word_string)
+            
 
-                line += word_string + ' '
-
-            cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 1)
+            cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 2)
         
-        lines.append(line)
+        # misspelled = spell.unknown(line)
+        # i=0
+        # for word in misspelled:
+        #     line[i] = spell.correction(word)
+        #     i += 1
 
-    # cv2.imshow("Bounding Boxes", img2)
-    # cv2.waitKey()
+        lines.append(' '.join(line))
+
+    plt.imshow(img2)
+    plt.show()
 
     return '\n'.join(lines)
 
