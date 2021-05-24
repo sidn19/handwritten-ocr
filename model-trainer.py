@@ -9,8 +9,8 @@ batch_size = 32
 
 dataset = 'isochronous-dataset'
 
-X_train = image_dataset_from_directory(dataset, validation_split=0.2, subset='training', seed=0, image_size=(image_height, image_width), color_mode='grayscale', batch_size=batch_size)
-X_test = image_dataset_from_directory(dataset, validation_split=0.2, subset='validation', seed=0, image_size=(image_height, image_width), color_mode='grayscale', batch_size=batch_size)
+X_train = image_dataset_from_directory(dataset, validation_split=0.15, subset='training', seed=0, image_size=(image_height, image_width), color_mode='grayscale', batch_size=batch_size)
+X_test = image_dataset_from_directory(dataset, validation_split=0.15, subset='validation', seed=0, image_size=(image_height, image_width), color_mode='grayscale', batch_size=batch_size)
 
 for image_batch, labels_batch in X_train:
     print(image_batch.shape)
@@ -61,7 +61,7 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 model.summary()
 
 # %%
-history = model.fit(X_train, validation_data=X_test, epochs=6)
+history = model.fit(X_train, validation_data=X_test, epochs=10)
 
 def print_to_file(s):
     with open('modelsummary.txt','a') as f:

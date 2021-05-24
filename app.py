@@ -1,7 +1,6 @@
 from bottle import get, post, run, view, request, BaseRequest
 from PIL import Image
 from io import BytesIO
-import pytesseract
 import base64
 from segmentation import image_to_text
 
