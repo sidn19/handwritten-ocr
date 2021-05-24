@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import argrelmin
+# from scipy.signal import argrelmin
 from tensorflow.keras.models import load_model
 from PIL import Image
-from skimage.morphology import skeletonize
+# from skimage.morphology import skeletonize
 
 import os
 
