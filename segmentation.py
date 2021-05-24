@@ -4,19 +4,16 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelmin
 from tensorflow.keras.models import load_model
 from PIL import Image
-<<<<<<< HEAD
-# import pytesseract
-=======
->>>>>>> ab26a4159d07988e974e18e72de87eda77328f41
 from skimage.morphology import skeletonize
 
 import os
 
 os.chdir(os.path.dirname(__file__))
 
-<<<<<<< HEAD
+
 # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-=======
+
+
 import tensorflow as tf
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -30,7 +27,7 @@ if gpus:
         # Memory growth must be set before GPUs have been initialized
         print(e)
 
->>>>>>> ab26a4159d07988e974e18e72de87eda77328f41
+
 
 def smooth(x, window_len=11, window='hanning'):
     if x.ndim != 1:
