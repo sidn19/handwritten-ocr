@@ -181,8 +181,10 @@ def get_characters(img):
     for character in characters:
         cv2.rectangle(img2, (character[0], 0), (character[1], img.shape[0]), (0, 0, 255), 2)
     
-    plt.imshow(img2)
-    plt.show()
+    # plt.imshow(img2)
+    # plt.show()
+    cv2.imshow("Segmentation", img2)
+    cv2.waitKey()
 
     character_images=[]
     for character in characters:
@@ -295,8 +297,10 @@ def image_to_text(img):
 
         lines.append(' '.join(line))
 
-    plt.imshow(img2)
-    plt.show()
+    # plt.imshow(img2)
+    # plt.show()
+    cv2.imshow('Bounding Boxes', img2)
+    cv2.waitKey()
 
     return '\n'.join(lines)
 
