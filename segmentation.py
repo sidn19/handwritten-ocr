@@ -250,12 +250,27 @@ def image_to_text(img):
 
     letters = "abcdefghijklmnopqrstuvwxyz"
 
+    # For Demonstration
+    for line_block in line_blocks:
+        line_start, line_end = line_block 
+        line_img = img[line_start:line_end, 0:img.shape[1]]
+        cv2.rectangle(img2, (0, line_start), (img.shape[1], line_end), (0, 0, 255), 1)
+        word_blocks = get_words_x_coordinates(line_img)
+        for word_block in word_blocks:
+            word_start, word_end = word_block
+            word_img = img[line_start:line_end, word_start:word_end]
+            cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 2)
+    
+    cv2.imshow('Bounding Boxes', img2)
+    cv2.waitKey()
+    ###
+
     lines = []
 
     for line_block in line_blocks:
         line_start, line_end = line_block 
         line_img = img[line_start:line_end, 0:img.shape[1]]
-        cv2.rectangle(img2, (0, line_start), (img.shape[1], line_end), (0, 0, 255), 1)
+        # cv2.rectangle(img2, (0, line_start), (img.shape[1], line_end), (0, 0, 255), 1)
 
         word_blocks = get_words_x_coordinates(line_img)
 
@@ -287,7 +302,7 @@ def image_to_text(img):
                 line.append(word_string)
             
 
-            cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 2)
+            # cv2.rectangle(img2, (word_start, line_start), (word_end, line_end), (0, 255, 0), 2)
         
         # misspelled = spell.unknown(line)
         # i=0
@@ -299,8 +314,8 @@ def image_to_text(img):
 
     # plt.imshow(img2)
     # plt.show()
-    cv2.imshow('Bounding Boxes', img2)
-    cv2.waitKey()
+    # cv2.imshow('Bounding Boxes', img2)
+    # cv2.waitKey()
 
     return '\n'.join(lines)
 
