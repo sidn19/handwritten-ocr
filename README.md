@@ -9,3 +9,7 @@ Handwritten English Optical Character Recognition - This project is an OCR using
 5. Modify the src variable in the copy-files.py file to the location you extracted the ocr_data.rar file in.
 6. Run copy-files.py
 7. Run make-x-files-dir.py 
+
+
+
+**Report Link: https://drive.google.com/file/d/1qGD7lXIxNHHyhUZ5wGM0RMrU2du8hdtb/view?usp=sharing**
