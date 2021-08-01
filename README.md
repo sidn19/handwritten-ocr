@@ -13,3 +13,14 @@ Handwritten English Optical Character Recognition - This project is an OCR using
 
 
 **Report Link: https://drive.google.com/file/d/1qGD7lXIxNHHyhUZ5wGM0RMrU2du8hdtb/view?usp=sharing**
+
+
+** Team Members:**
+
+Aditya Nair
+
+Anant Vishwakarma
+
+Sidharth Nair
+
+Niranjan Badgujar
